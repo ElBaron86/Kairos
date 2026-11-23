@@ -131,11 +131,13 @@ export const Agenda = () => {
   const allDay = all(day).filter((e) => e.allDay);
   const isToday = day === t;
   const selected = sel != null ? events[sel] : null;
+  const nowEv = isToday ? events.find((e) => toH(e.start) <= now && toH(e.end) > now) : null;
   const nextEv = isToday ? events.find((e) => toH(e.start) >= now) : null;
   const busy = (list) => list.reduce((a, e) => a + Math.max(0, toH(e.end) - toH(e.start)), 0);
 
   let center;
   if (selected) center = { k: (EVENT_CATS[selected.cat] || EVENT_CATS.perso).name, t: selected.title, s: `${selected.start} – ${selected.end}`, c: catColor(selected.cat, dark) };
+  else if (nowEv) center = { k: 'En ce moment', t: nowEv.title, s: `jusqu'à ${nowEv.end}`, c: catColor(nowEv.cat, dark) };
   else if (isToday && nextEv) center = { k: 'À suivre', t: nextEv.title, s: `${nextEv.start} · dans ${fmtMin(Math.round((toH(nextEv.start) - now) * 60))}`, c: catColor(nextEv.cat, dark) };
   else if (events.length) center = { k: isToday ? 'Plus rien' : cap(fmtWeekday(day)), t: `${events.length} événement${events.length > 1 ? 's' : ''}`, s: `${fmtHours(busy(events))} h planifiées`, c: 'var(--accent)' };
   else center = { k: 'Journée libre', t: 'Rien de prévu', s: 'Touchez + pour ajouter', c: 'var(--muted)' };
@@ -195,7 +197,7 @@ export const Agenda = () => {
           <section class="card" style={{ alignItems: 'center', borderRadius: '32px' }}>
             <Dial events={events} size={300} now={isToday ? now : null} selected={sel} onPick={(i) => setSel(sel === i ? null : i)}>
               <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: center.c }}>{center.k}</span>
-              <span class="big" style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1.15 }}>{center.t}</span>
+              <span class="big" style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1.15, maxWidth: '140px' }}>{center.t}</span>
               <span class="sm muted num">{center.s}</span>
             </Dial>
             {used.length > 0 && (
@@ -204,8 +206,8 @@ export const Agenda = () => {
               </div>
             )}
           </section>
-          <section class="col" style={{ gap: '10px' }}>
-            <div class="row between"><h2 class="h2">{isToday ? 'Aujourd’hui' : cap(fmtLong(day))}</h2><span class="sm muted">{events.length} événement{events.length > 1 ? 's' : ''}</span></div>
+          <section class="section">
+            <div class="section-head"><h2 class="h2">{isToday ? 'Aujourd’hui' : cap(fmtLong(day))}</h2><span class="sm muted">{events.length} événement{events.length > 1 ? 's' : ''}</span></div>
             {events.map((e, i) => {
               const c = EVENT_CATS[e.cat] || EVENT_CATS.perso;
               const rep = repeatLabel(e);

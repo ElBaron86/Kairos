@@ -111,7 +111,7 @@ export const Review = () => {
 
       {curCount > 0 && (
         <section class="card">
-          <div class="row between"><h2 class="h2">Mes intentions de la semaine</h2><span class="sm b" style={{ color: 'var(--accent)' }}>{curDone}/{curCount}</span></div>
+          <div class="section-head"><h2 class="h2">Mes intentions de la semaine</h2><span class="sm b" style={{ color: 'var(--accent)' }}>{curDone}/{curCount}</span></div>
           <Intentions s={s} week={mon} />
         </section>
       )}

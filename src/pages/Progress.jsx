@@ -92,7 +92,7 @@ export const Progress = () => {
         )}
       </section>
 
-      <section class="col" style={{ gap: '12px' }}>
+      <section class="section">
         <h2 class="h2">Mes apprentissages</h2>
         {s.skills.length === 0 && <div class="empty">Piano, langue, sport… Lancez votre premier défi ci-dessous.</div>}
         {s.skills.map((k) => {
@@ -200,7 +200,7 @@ const Path = ({ skill }) => {
   };
   return (
     <section class="card">
-      <div class="row between"><h2 class="h2">Mon parcours</h2><span class="sm muted">{doneCount}/{steps.length} étapes</span></div>
+      <div class="section-head"><h2 class="h2">Mon parcours</h2><span class="sm muted">{doneCount}/{steps.length} étapes</span></div>
       {steps.length > 0 && (
         <div style={{ position: 'relative', width: `${W}px`, height: `${h}px`, alignSelf: 'center' }}>
           <svg width={W} height={h} viewBox={`0 0 ${W} ${h}`} aria-hidden="true" style={{ position: 'absolute', inset: 0 }}>
@@ -261,7 +261,7 @@ const Heatmap = ({ skill }) => {
   const active = Object.keys(byDay).filter((d) => d >= start).length;
   return (
     <section class="card">
-      <div class="row between"><h2 class="h2">12 dernières semaines</h2><span class="sm muted">{active} jours de pratique</span></div>
+      <div class="section-head"><h2 class="h2">12 dernières semaines</h2><span class="sm muted">{active} jours de pratique</span></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: '4px' }}>
         {cols.map((c) => <div class="col" style={{ gap: '4px' }}>{c.map((v) => <span style={{ aspectRatio: '1', borderRadius: '5px', background: v == null ? 'transparent' : shades[v], display: 'block' }} />)}</div>)}
       </div>
@@ -276,7 +276,7 @@ const Monthly = ({ skill }) => {
   const max = Math.max(60, ...vals);
   return (
     <section class="card">
-      <div class="row between"><h2 class="h2">Temps par mois</h2><span class="sm muted">{fmtMin(vals[5])} ce mois-ci</span></div>
+      <div class="section-head"><h2 class="h2">Temps par mois</h2><span class="sm muted">{fmtMin(vals[5])} ce mois-ci</span></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: '8px', alignItems: 'end', height: '130px' }}>
         {months.map((m, i) => (
           <div class="col" style={{ alignItems: 'center', gap: '6px', justifyContent: 'flex-end', height: '130px' }}>
@@ -342,7 +342,7 @@ export const SkillDetail = ({ id }) => {
       <Heatmap skill={k} />
       <Monthly skill={k} />
 
-      <section class="col" style={{ gap: '10px' }}>
+      <section class="section">
         <h2 class="h2">Badges</h2>
         <div class="hscroll hide-scroll" style={{ gap: '10px' }}>
           {badges.map((b) => (

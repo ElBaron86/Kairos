@@ -9,7 +9,8 @@ import { supabase } from './cloud.js';
 import { upcoming } from './reminders.js';
 
 // Clé publique VAPID (la clé privée n'est que dans les secrets Supabase).
-const VAPID_PUBLIC = 'BC42aImpOKrTPstl06wsYE5isAU_gbJBCKtHp3U1rySEXK2cROhnB7GZcX4TB_DTBKuwkjcWMFTV1l-kiw9iwXg';
+// À remplir avec la clé publique générée par scripts/generate_vapid_keys.py.
+const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 const FLAG = 'kairos:push';
 
 export const pushSupported = () => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && location.protocol === 'https:';
@@ -24,6 +25,7 @@ const b64ToBytes = (b64) => {
 /** Abonne cet appareil aux notifications serveur. Renvoie un message d'erreur ou null. */
 export const enablePush = async () => {
   if (!pushSupported()) return 'Notifications serveur indisponibles sur ce navigateur.';
+  if (!VAPID_PUBLIC) return 'Notifications activées pendant que Kairos est ouvert. L\u2019envoi application fermée sera disponible très bientôt.';
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return 'Connectez-vous pour recevoir les rappels application fermée.';
   try {

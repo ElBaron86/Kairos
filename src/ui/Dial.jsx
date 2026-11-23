@@ -50,14 +50,14 @@ export const Dial = ({ events, size = 300, now = null, selected = null, onPick, 
     const [x2, y2] = pt(h, major ? 90 : 95);
     return { x1, y1, x2, y2, w: major ? 2.5 : 1.5 };
   }) : [];
-  const inner = size * (ticks ? 0.42 : 0.5);
+  const inner = size * 0.5;
   return (
     <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
-      <svg width={size} height={size} viewBox="0 0 300 300" role="img" aria-label={`Cadran de la journée : ${events.length} événement${events.length > 1 ? 's' : ''}`} style={{ position: 'absolute', inset: 0 }}>
+      <svg width={size} height={size} viewBox="0 0 300 300" role="img" aria-label={`Cadran de la journée : ${events.length} événement${events.length > 1 ? 's' : ''}`} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
         <circle cx="150" cy="150" r={R} style={{ fill: 'none', stroke: track, strokeWidth: width + 6 }} />
         <path d={`${arc(22.5, 23.99)} ${arc(0, 6.5)}`} style={{ fill: 'none', stroke: 'var(--line)', strokeWidth: width + 6, opacity: 0.55 }} />
         {tickList.map((t) => <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} style={{ stroke: 'var(--faint)', strokeWidth: t.w, strokeLinecap: 'round', opacity: 0.6 }} />)}
-        {ticks && [0, 6, 12, 18].map((h) => { const [x, y] = pt(h, 79); return <text x={x} y={y} text-anchor="middle" dominant-baseline="middle" style={{ fill: 'var(--muted)', fontSize: '12px', fontWeight: 700 }}>{String(h).padStart(2, '0')}h</text>; })}
+        {ticks && [0, 6, 12, 18].map((h) => { const [x, y] = pt(h, 143); return <text x={x} y={y} text-anchor="middle" dominant-baseline="middle" style={{ fill: 'var(--muted)', fontSize: '11px', fontWeight: 700 }}>{String(h).padStart(2, '0')}h</text>; })}
         {events.map((e, i) => {
           const s = toH(e.start);
           let en = toH(e.end);
@@ -70,7 +70,7 @@ export const Dial = ({ events, size = 300, now = null, selected = null, onPick, 
         {now != null && (() => {
           const [x, y] = pt(now);
           return <>
-            {ticks && <line x1="150" y1="150" x2={x} y2={y} style={{ stroke: 'var(--ink)', strokeWidth: 2, strokeDasharray: '3 5' }} />}
+            {ticks && <line x1={pt(now, 74)[0]} y1={pt(now, 74)[1]} x2={x} y2={y} style={{ stroke: 'var(--ink)', strokeWidth: 2, strokeDasharray: '3 5' }} />}
             <circle cx={x} cy={y} r={ticks ? 9 : 13} style={{ fill: 'var(--ink)', stroke: 'var(--surface)', strokeWidth: 4 }} />
           </>;
         })()}

@@ -41,10 +41,17 @@ Ce dépôt est publié par **GitHub Pages** : le fichier `.github/workflows/depl
 
 Puis Réglages (roue dentée sur l'accueil) ou onglet Rappels → *Activer les notifications*.
 
-## Limites de cette version
+## Notifications application fermée
 
-- Les rappels sont déclenchés par l'application elle-même : ils partent quand Kairos est ouvert ou en arrière-plan récent. Prochaine étape : une fonction planifiée Supabase qui envoie des notifications *Web Push* application fermée (le service worker `public/sw.js` sait déjà les afficher).
-- Si deux appareils sont modifiés en même temps hors ligne, la version la plus récente l'emporte.
+1. Générez une paire de clés : `pip install cryptography` puis `python scripts/generate_vapid_keys.py`.
+2. Supabase → **Edge Functions → Secrets** : ajoutez `VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY`.
+3. Mettez la clé **publique** dans l'application : variable `VITE_VAPID_PUBLIC_KEY` (fichier `.env` ou secret du workflow GitHub), ou directement dans `src/lib/push.js`.
+
+L'application dépose ses rappels des 14 prochains jours dans la table `push_queue` ; la fonction `send-reminders`, appelée chaque minute par `pg_cron`, envoie ceux qui sont arrivés à échéance. Si Kairos n'est pas ouvert pendant plus de deux semaines, les rappels s'arrêtent jusqu'à la prochaine ouverture.
+
+## Limites
+
+- Si deux appareils modifient exactement la même donnée hors ligne, la modification la plus récente l'emporte ; le reste est fusionné.
 
 ## Organisation du code
 
@@ -53,13 +60,16 @@ src/
   main.jsx          navigation, boucle des rappels
   store.js          état global + enregistrement local
   lib/cloud.js      compte Supabase + synchronisation
+  lib/merge.js      fusion des modifications de plusieurs appareils
+  lib/push.js       notifications application fermée
   styles.css        thème clair / nuit, composants
   data/             catégories, plans bibliques, données d'exemple
   lib/              dates, calculs, rappels
   ui/               icônes, cadran, composants communs
   pages/            un fichier par écran
 public/             icônes, manifeste PWA, service worker
-supabase/           migrations de la base de données
+supabase/           migrations et fonction d'envoi des rappels
+scripts/            outils (génération des clés de notification)
 ```
 
 `npm run build:demo` produit une version en un seul fichier HTML (`dist-demo/index.html`), pratique pour un aperçu.

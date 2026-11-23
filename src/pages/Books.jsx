@@ -129,7 +129,7 @@ export const Books = () => {
         </div>
       )}
 
-      <section class="col" style={{ gap: '10px' }}>
+      <section class="section">
         <h2 class="h2">En cours</h2>
         {reading.length === 0 && <div class="empty">Aucune lecture en cours. Ajoutez un livre avec le bouton +.</div>}
         {reading.map((b) => {
@@ -173,7 +173,7 @@ export const Books = () => {
       </section>
 
       {todo.length > 0 && (
-        <section class="col" style={{ gap: '8px' }}>
+        <section class="section" style={{ gap: '12px' }}>
           <h2 class="h2">À lire ensuite</h2>
           {todo.map((b) => {
             const c = BOOK_CATS[b.cat] || BOOK_CATS.autre;
@@ -189,7 +189,7 @@ export const Books = () => {
       )}
 
       {done.length > 0 && (
-        <section class="col" style={{ gap: '8px' }}>
+        <section class="section" style={{ gap: '12px' }}>
           <h2 class="h2">Terminés</h2>
           {done.map((b) => (
             <button class="row" style={{ border: 0, background: 'transparent', padding: '4px 2px', textAlign: 'left', color: 'var(--ink)' }} onClick={() => setEdit(b)}>

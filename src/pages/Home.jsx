@@ -135,11 +135,11 @@ export const Home = () => {
         const sunday = parseISO(t).getDay() === 0;
         const reviewed = ((s.reviews || {})[wk] || {}).reviewedAt;
         if (!hasIntent && !(sunday && !reviewed)) {
-          return <a href="#/revue" class="btn soft block" style={{ height: '52px' }}><Icon name="sparkles" size={18} />Ma revue de la semaine</a>;
+          return <a href="#/revue" class="btn ghost block" style={{ minHeight: '54px' }}><Icon name="sparkles" size={18} />Ma revue de la semaine</a>;
         }
         return (
           <section class="card">
-            <div class="row between"><h2 class="h2">{hasIntent ? 'Mes intentions' : 'C\u2019est dimanche'}</h2><a href="#/revue" class="sm b">{sunday && !reviewed ? 'Faire ma revue' : 'Ma revue'}</a></div>
+            <div class="section-head"><h2 class="h2">{hasIntent ? 'Mes intentions' : 'C\u2019est dimanche'}</h2><a href="#/revue" class="sm b">{sunday && !reviewed ? 'Faire ma revue' : 'Ma revue'}</a></div>
             {hasIntent ? <Intentions s={s} week={wk} compact /> : <span class="sm muted">Prenez 5 minutes pour faire le bilan de la semaine et choisir 3 intentions.</span>}
           </section>
         );

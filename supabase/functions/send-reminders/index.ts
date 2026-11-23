@@ -5,16 +5,21 @@ import webpush from 'npm:web-push@3.6.7';
 
 const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-webpush.setVapidDetails(
-  'https://elbaron86.github.io/Kairos/',
-  Deno.env.get('VAPID_PUBLIC_KEY')!,
-  Deno.env.get('VAPID_PRIVATE_KEY')!
-);
+let ready = false;
+const setup = () => {
+  if (ready) return;
+  webpush.setVapidDetails('https://elbaron86.github.io/Kairos/', Deno.env.get('VAPID_PUBLIC_KEY')!, Deno.env.get('VAPID_PRIVATE_KEY')!);
+  ready = true;
+};
 
+// Pas de secret d'appel : la fonction ne fait qu'envoyer des rappels déjà programmés
+// par leurs propriétaires. L'appeler plus souvent n'envoie rien de plus.
 Deno.serve(async (req) => {
-  if (req.headers.get('x-cron-secret') !== Deno.env.get('CRON_SECRET')) {
-    return new Response('Non autorisé', { status: 401 });
+  if (req.method !== 'POST') return new Response('Méthode non autorisée', { status: 405 });
+  if (!Deno.env.get('VAPID_PRIVATE_KEY') || !Deno.env.get('VAPID_PUBLIC_KEY')) {
+    return new Response('Clés VAPID manquantes', { status: 503 });
   }
+  setup();
 
   // Rappels dus depuis moins de 15 minutes et pas encore envoyés.
   const now = new Date();

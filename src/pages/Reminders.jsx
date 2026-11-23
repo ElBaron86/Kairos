@@ -98,7 +98,7 @@ export const Reminders = () => {
 
       {groups.length === 0 && <div class="empty">Aucun rappel cette semaine. Ajoutez un rappel à un événement de l'agenda, à un plan de lecture, ou avec le bouton +.</div>}
       {groups.map((g) => (
-        <section class="col" style={{ gap: '8px' }}>
+        <section class="section" style={{ gap: '12px' }}>
           <h2 class="kicker" style={{ margin: '4px 0 0' }}>{label(g)}</h2>
           {list.filter((r) => r.date === g).map((r) => {
             const k = KIND[r.kind] || KIND.perso;

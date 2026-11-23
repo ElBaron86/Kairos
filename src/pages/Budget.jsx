@@ -120,7 +120,7 @@ const History = ({ s, month, setMonth }) => {
   const max = Math.max(1, ...data.map((d) => Math.max(d.income, d.spent)));
   return (
     <section class="card">
-      <div class="row between"><h2 class="h2">6 derniers mois</h2><span class="row small muted" style={{ gap: '10px' }}><span class="row" style={{ gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'var(--line)' }} />Revenus</span><span class="row" style={{ gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#F2A25B' }} />Dépenses</span></span></div>
+      <div class="section-head"><h2 class="h2">6 derniers mois</h2><span class="row small muted" style={{ gap: '10px' }}><span class="row" style={{ gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'var(--line)' }} />Revenus</span><span class="row" style={{ gap: '4px' }}><span style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#F2A25B' }} />Dépenses</span></span></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: '8px', alignItems: 'end', height: '150px' }}>
         {data.map((d) => (
           <button onClick={() => setMonth(d.key)} aria-label={`${fmtMonth(d.key)} : ${eur(d.spent)} dépensés`} style={{ border: 0, background: 'transparent', padding: 0, height: '150px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
@@ -261,8 +261,8 @@ export const Budget = () => {
         <button class="btn block" onClick={add}><Icon name="plus" size={18} />Ajouter à {c.name}</button>
       </section>
 
-      <section class="col" style={{ gap: '10px' }}>
-        <div class="row between"><h2 class="h2">Dépenses par catégorie</h2><button class="btn soft small" onClick={() => setSheet('caps')}><Icon name="target" size={16} />Plafonds</button></div>
+      <section class="section">
+        <div class="section-head"><h2 class="h2">Dépenses par catégorie</h2><button class="btn soft small" onClick={() => setSheet('caps')}><Icon name="target" size={16} />Plafonds</button></div>
         {byCat.length === 0 && <div class="empty">Aucune dépense ce mois-ci.</div>}
         {byCat.length > 0 && (
           <div class="card" style={{ padding: '6px 16px', gap: 0 }}>
@@ -297,7 +297,7 @@ export const Budget = () => {
       </section>
 
       {recList.length > 0 && (
-        <section class="col" style={{ gap: '8px' }}>
+        <section class="section" style={{ gap: '12px' }}>
           <h2 class="h2">Chaque mois</h2>
           <div class="card" style={{ padding: '6px 16px', gap: 0 }}>
             {recList.map((r) => {
@@ -318,7 +318,7 @@ export const Budget = () => {
 
       <History s={s} month={month} setMonth={setMonth} />
 
-      <section class="col" style={{ gap: '10px' }}>
+      <section class="section">
         <h2 class="h2">Mes objectifs d'épargne</h2>
         {s.budget.goals.length > 0 && (
           <div class="hscroll hide-scroll" style={{ gap: '12px' }}>

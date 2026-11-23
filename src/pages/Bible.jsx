@@ -100,7 +100,7 @@ export const Bible = () => {
       {active.length === 0 && <div class="empty">Aucun plan en cours. Choisissez un thème ci-dessous ou créez votre propre plan.</div>}
       {active.map((p) => <PlanCard p={p} />)}
 
-      <section class="col" style={{ gap: '10px' }}>
+      <section class="section">
         <h2 class="h2">Commencer un thème</h2>
         <div class="grid2">
           {THEMES.map((th) => {
@@ -137,7 +137,7 @@ export const Bible = () => {
       </a>
 
       {done.length > 0 && (
-        <section class="col" style={{ gap: '8px' }}>
+        <section class="section" style={{ gap: '12px' }}>
           <h2 class="h2">Plans accomplis</h2>
           {done.map((p) => (
             <a href={`#/lecture/plan/${p.id}`} class="row" style={{ color: 'var(--ink)', textDecoration: 'none' }}>
@@ -200,7 +200,7 @@ export const PlanDetail = ({ id }) => {
         )}
       </section>
 
-      <section class="col" style={{ gap: '8px' }}>
+      <section class="section" style={{ gap: '12px' }}>
         {(() => {
           // Pour les longs plans, on affiche une fenêtre autour de la lecture en cours.
           const from = showAll || p.days.length <= 14 ? 0 : Math.max(0, (n === -1 ? p.days.length : n) - 3);
