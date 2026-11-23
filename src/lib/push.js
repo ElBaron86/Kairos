@@ -9,8 +9,8 @@ import { supabase } from './cloud.js';
 import { upcoming } from './reminders.js';
 
 // Clé publique VAPID (la clé privée n'est que dans les secrets Supabase).
-// À remplir avec la clé publique générée par scripts/generate_vapid_keys.py.
-const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+// Clé publique générée par scripts/generate_vapid_keys.py (la clé privée est uniquement dans les secrets Supabase).
+const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BM0vPzSN1KBwY5bSd_NYeYEw3_7h6IrmmT94IrcL63qz8egbk0a9yBokRGgBng-MVu_hsKMBg9lsmA-Akfhy-Sc';
 const FLAG = 'kairos:push';
 
 export const pushSupported = () => typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && location.protocol === 'https:';
