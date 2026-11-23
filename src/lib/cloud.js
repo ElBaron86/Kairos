@@ -8,6 +8,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { useEffect, useState } from 'preact/hooks';
 import { applyRemote, getState, subscribe } from '../store.js';
+import { merge3 } from './merge.js';
 
 // L'URL et la clé « publishable » sont publiques par nature : la sécurité repose sur
 // les règles RLS de la table (voir supabase/migrations). Ne jamais mettre ici la clé secrète.
@@ -15,6 +16,7 @@ const URL = import.meta.env.VITE_SUPABASE_URL || 'https://coaiwgpbwybgfpebvcns.s
 const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_RUrRl7ndBsqrpPUgkdKCWg_npeUXUlE';
 const TABLE = 'kairos_state';
 const LINK_KEY = 'kairos:sync-user';
+const BASE_KEY = 'kairos:sync-base';
 
 export const supabase = createClient(URL, KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'kairos:auth' }
@@ -32,6 +34,9 @@ export const useCloud = () => {
 };
 
 const linkedUser = () => { try { return localStorage.getItem(LINK_KEY); } catch (e) { return null; } };
+// Dernière version commune avec le serveur : sert d'ancêtre pour la fusion.
+const getBase = () => { try { const v = localStorage.getItem(BASE_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+const setBase = (data) => { try { if (data) localStorage.setItem(BASE_KEY, JSON.stringify(data)); else localStorage.removeItem(BASE_KEY); } catch (e) { /* ignoré */ } };
 const link = (id) => { try { if (id) localStorage.setItem(LINK_KEY, id); else localStorage.removeItem(LINK_KEY); } catch (e) { /* ignoré */ } };
 
 /** L'appareil contient-il des données saisies (et pas seulement un état vide) ? */
@@ -56,6 +61,7 @@ export const push = async () => {
   const { error } = await supabase.from(TABLE).upsert({ user_id: status.user.id, data: s, updated_at: new Date(s.meta.updatedAt || Date.now()).toISOString() });
   if (error) { set({ state: 'error', error: friendly(error) }); return; }
   link(status.user.id);
+  setBase(s);
   set({ state: 'ok', at: new Date(), error: null });
 };
 
@@ -73,7 +79,17 @@ export const pull = async () => {
     set({ state: 'conflict', conflict: { remoteAt, remote: data.data } });
     return;
   }
-  if (linkedUser() !== status.user.id || remoteAt > localAt) applyRemote(data.data);
+  const base = linkedUser() === status.user.id ? getBase() : null;
+  const baseAt = base ? base.meta.updatedAt || 0 : null;
+  if (base && remoteAt > baseAt && localAt > baseAt) {
+    // Modifié des deux côtés depuis la dernière synchronisation : on fusionne.
+    const merged = merge3(base, local, data.data, localAt >= remoteAt);
+    merged.meta = { ...merged.meta, updatedAt: Date.now() };
+    applyRemote(merged);
+    await push();
+    return;
+  }
+  if (linkedUser() !== status.user.id || remoteAt > localAt) { applyRemote(data.data); setBase(data.data); }
   else if (localAt > remoteAt) { await push(); return; }
   link(status.user.id);
   set({ state: 'ok', at: new Date(), error: null });
@@ -85,7 +101,7 @@ export const resolveConflict = async (keep) => {
   if (!c) return;
   set({ conflict: null });
   link(status.user.id);
-  if (keep === 'remote') { applyRemote(c.remote); set({ state: 'ok', at: new Date() }); }
+  if (keep === 'remote') { applyRemote(c.remote); setBase(c.remote); set({ state: 'ok', at: new Date() }); }
   else await push();
 };
 
@@ -110,6 +126,7 @@ export const resetPassword = async (email) => {
 export const signOut = async () => {
   await supabase.auth.signOut();
   link(null);
+  setBase(null);
   set({ user: null, state: 'off', at: null, error: null, conflict: null });
 };
 
@@ -136,4 +153,18 @@ export const startCloud = () => {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); });
   window.addEventListener('online', () => pull());
   setInterval(() => { if (document.visibilityState === 'visible') pull(); }, 60000);
+};
+
+/** Versions précédentes enregistrées par le serveur (une toutes les 6 h au plus, 30 au maximum). */
+export const listHistory = async () => {
+  if (!status.user) return [];
+  const { data, error } = await supabase.from('kairos_history').select('id, saved_at').eq('user_id', status.user.id).order('saved_at', { ascending: false }).limit(30);
+  if (error) throw new Error(friendly(error));
+  return data;
+};
+
+export const loadHistory = async (id) => {
+  const { data, error } = await supabase.from('kairos_history').select('data').eq('id', id).single();
+  if (error) throw new Error(friendly(error));
+  return data.data;
 };

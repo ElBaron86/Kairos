@@ -1,6 +1,7 @@
 // Connexion, création de compte et état de la synchronisation.
 import { useState } from 'preact/hooks';
-import { pull, resetPassword, resolveConflict, signIn, signOut, signUp, useCloud } from '../lib/cloud.js';
+import { listHistory, loadHistory, pull, resetPassword, resolveConflict, signIn, signOut, signUp, useCloud } from '../lib/cloud.js';
+import { replaceState } from '../store.js';
 import { Icon } from './icons.jsx';
 import { Field, Sheet, toast } from './kit.jsx';
 
@@ -98,5 +99,36 @@ export const ConflictSheet = () => {
       <button class="btn ghost block" onClick={() => resolveConflict('local')}>Remplacer par celles de cet appareil</button>
       <p class="small muted" style={{ margin: 0 }}>Conseil : si cet appareil ne contient que les exemples, gardez les données du compte.</p>
     </Sheet>
+  );
+};
+
+/** Versions précédentes conservées par le serveur, avec restauration. */
+export const HistoryButton = () => {
+  const c = useCloud();
+  const [list, setList] = useState(null);
+  const [err, setErr] = useState(null);
+  if (!c.user) return null;
+  const open = async () => { setErr(null); setList([]); try { setList(await listHistory()); } catch (e) { setErr(e.message); } };
+  const restore = async (id, at) => {
+    try { replaceState(await loadHistory(id)); toast(`Version du ${at} restaurée`); setList(null); } catch (e) { toast(e.message); }
+  };
+  const fmt = (d) => new Date(d).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return (
+    <>
+      <button class="btn soft block" onClick={open}><Icon name="clock" size={18} />Versions précédentes</button>
+      {list && (
+        <Sheet title="Versions précédentes" onClose={() => setList(null)}>
+          <p class="sm muted" style={{ margin: 0 }}>Le serveur garde une copie de vos données au plus toutes les 6 heures (30 copies). Restaurer remplace vos données actuelles sur tous vos appareils.</p>
+          {err && <p class="sm" style={{ margin: 0 }}>{err}</p>}
+          {!err && list.length === 0 && <div class="empty">Aucune version enregistrée pour l'instant.</div>}
+          {list.map((h) => (
+            <div class="row">
+              <span class="sm b grow" style={{ textTransform: 'capitalize' }}>{fmt(h.saved_at)}</span>
+              <button class="btn soft small" onClick={() => restore(h.id, fmt(h.saved_at))}>Restaurer</button>
+            </div>
+          ))}
+        </Sheet>
+      )}
+    </>
   );
 };

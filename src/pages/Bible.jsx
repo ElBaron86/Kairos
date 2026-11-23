@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks';
 import { update, useStore } from '../store.js';
-import { ALL_BOOKS, NT, OT, THEMES, buildDays } from '../data/bible.js';
+import { ALL_BOOKS, NT, OT, THEMES, buildDays, buildYearDays, passageUrl } from '../data/bible.js';
 import { PALETTE } from '../data/catalog.js';
 import { nextIndex } from '../lib/reminders.js';
 import { addDays, fmtDay, parseISO, streakOf, today, uid } from '../lib/util.js';
 import { Icon, PATHS } from '../ui/icons.jsx';
-import { DeleteButton, Field, Header, Ring, go, toast } from '../ui/kit.jsx';
+import { DeleteButton, Field, Header, Ring, Sheet, go, toast } from '../ui/kit.jsx';
 
 const WEEK = [['L', 'Lundi', 1], ['M', 'Mardi', 2], ['M', 'Mercredi', 3], ['J', 'Jeudi', 4], ['V', 'Vendredi', 5], ['S', 'Samedi', 6], ['D', 'Dimanche', 0]];
 
@@ -36,6 +36,36 @@ const startTheme = (th) => {
   go(`/lecture/plan/${id}`);
 };
 
+const startYear = () => {
+  const id = uid();
+  update((d) => {
+    d.plans.unshift({ id, kind: 'year', name: 'Bible en un an', color: '#0F6E86', icon: 'book', key: '', desc: 'Toute la Bible en 365 lectures de 3 à 4 chapitres.', days: buildYearDays(), done: {}, start: today(), time: '07:00', remind: true, weekdays: [0, 1, 2, 3, 4, 5, 6] });
+  });
+  go(`/lecture/plan/${id}`);
+};
+
+const KIND_LABEL = { theme: 'Plan thématique', custom: 'Plan personnalisé', year: 'Plan annuel' };
+
+/** Feuille de méditation : notes personnelles sur une lecture. */
+const NoteSheet = ({ plan, idx, onClose }) => {
+  const [txt, setTxt] = useState((plan.notes || {})[idx] || '');
+  const save = () => {
+    update((d) => { const p = d.plans.find((x) => x.id === plan.id); p.notes = { ...(p.notes || {}) }; if (txt.trim()) p.notes[idx] = txt.trim(); else delete p.notes[idx]; });
+    toast(txt.trim() ? 'Méditation enregistrée' : 'Note effacée');
+    onClose();
+  };
+  const url = passageUrl(plan.days[idx].ref);
+  return (
+    <Sheet title={plan.days[idx].ref} onClose={onClose}>
+      {url && <a class="btn soft block" href={url} target="_blank" rel="noopener"><Icon name="book" size={18} />Lire le passage (Louis Segond)</a>}
+      <Field label="Ma méditation" hint="Ce qui m'a touché, une prière, une résolution…">
+        <textarea class="input" style={{ height: '180px', padding: '12px 14px', lineHeight: 1.5 }} value={txt} onInput={(e) => setTxt(e.target.value)} />
+      </Field>
+      <button class="btn accent block" onClick={save}>Enregistrer</button>
+    </Sheet>
+  );
+};
+
 const PlanCard = ({ p }) => {
   const n = nextIndex(p);
   const count = Object.keys(p.done).length;
@@ -45,7 +75,7 @@ const PlanCard = ({ p }) => {
       <svg width="200" height="200" viewBox="0 0 24 24" aria-hidden="true" style={{ position: 'absolute', right: '-46px', top: '-40px', opacity: 0.12 }}><path class="ic" d={PATHS[p.icon] || PATHS.book} style={{ strokeWidth: 1.2 }} /></svg>
       <a href={`#/lecture/plan/${p.id}`} class="row" style={{ color: '#FFFFFF', textDecoration: 'none', alignItems: 'flex-start' }}>
         <div class="col grow" style={{ gap: '4px' }}>
-          <span class="small b" style={{ textTransform: 'uppercase', letterSpacing: '.1em', opacity: 0.85 }}>{p.kind === 'theme' ? 'Plan thématique' : 'Plan personnalisé'}</span>
+          <span class="small b" style={{ textTransform: 'uppercase', letterSpacing: '.1em', opacity: 0.85 }}>{KIND_LABEL[p.kind] || 'Plan'}</span>
           <span class="serif" style={{ fontSize: '38px', lineHeight: 0.95 }}>{p.name}</span>
           <span class="sm" style={{ opacity: 0.9 }}>{n === -1 ? 'Accompli' : `Jour ${n + 1} · ${p.days[n].ref}`}</span>
         </div>
@@ -87,6 +117,17 @@ export const Bible = () => {
         </div>
       </section>
 
+      {!active.some((p) => p.kind === 'year') && (
+        <button onClick={startYear} class="card" style={{ flexDirection: 'row', alignItems: 'center', border: 0, textAlign: 'left', color: 'var(--ink)' }}>
+          <span class="tile" style={{ width: '52px', height: '52px', borderRadius: '18px', background: '#0F6E86', color: '#FFFFFF' }}><Icon name="calendar" size={24} /></span>
+          <span class="col grow" style={{ gap: '2px' }}><span class="serif" style={{ fontSize: '26px', lineHeight: 1.05 }}>La Bible en un an</span><span class="sm muted">365 lectures, de la Genèse à l'Apocalypse</span></span>
+        </button>
+      )}
+      <a href="#/lecture/carnet" class="card" style={{ flexDirection: 'row', alignItems: 'center', textDecoration: 'none', color: 'var(--ink)' }}>
+        <span class="tile" style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'var(--warm-soft)', color: 'var(--warm-ink)' }}><Icon name="edit" size={24} /></span>
+        <span class="col grow" style={{ gap: '2px' }}><span class="serif" style={{ fontSize: '26px', lineHeight: 1.05 }}>Mon carnet</span><span class="sm muted">{s.plans.reduce((t, p) => t + Object.keys(p.notes || {}).length, 0)} méditations</span></span>
+        <Icon name="right" />
+      </a>
       <a href="#/lecture/nouveau" class="card dark" style={{ flexDirection: 'row', alignItems: 'center', textDecoration: 'none' }}>
         <span class="tile" style={{ width: '52px', height: '52px', borderRadius: '18px', background: 'var(--on-dark)', color: 'var(--dark)' }}><Icon name="plus" size={24} /></span>
         <span class="col grow" style={{ gap: '2px' }}>
@@ -114,6 +155,8 @@ export const Bible = () => {
 export const PlanDetail = ({ id }) => {
   const s = useStore();
   const p = s.plans.find((x) => x.id === id);
+  const [note, setNote] = useState(null);
+  const [showAll, setShowAll] = useState(false);
   if (!p) return <div class="page"><Header back="/lecture" title="Plan introuvable" /></div>;
   const n = nextIndex(p);
   const count = Object.keys(p.done).length;
@@ -127,7 +170,7 @@ export const PlanDetail = ({ id }) => {
   });
   return (
     <div class="page warm">
-      <Header back="/lecture" kicker={p.kind === 'theme' ? 'Plan thématique' : 'Plan personnalisé'} title={p.name} serif />
+      <Header back="/lecture" kicker={KIND_LABEL[p.kind] || 'Plan'} title={p.name} serif />
       <section class="card color" style={{ background: p.color, borderRadius: '32px', gap: '16px' }}>
         <div class="row" style={{ alignItems: 'flex-start' }}>
           <div class="col grow" style={{ gap: '6px' }}>
@@ -150,26 +193,42 @@ export const PlanDetail = ({ id }) => {
         ) : readToday ? (
           <span class="pill" style={{ background: 'rgba(255,255,255,.18)', alignSelf: 'flex-start', fontSize: '13px' }}><Icon name="check" size={16} />Lecture du jour faite · prochaine : {p.days[n].ref}</span>
         ) : (
-          <button class="btn" style={{ background: '#FFFFFF', color: p.color, height: '52px' }} onClick={() => validateNext(p)}><Icon name="check" size={18} />Valider le jour {n + 1} · {p.days[n].ref}</button>
+          <div class="col" style={{ gap: '8px' }}>
+            <button class="btn" style={{ background: '#FFFFFF', color: p.color, height: '52px' }} onClick={() => { validateNext(p); setNote(n); }}><Icon name="check" size={18} />Valider le jour {n + 1} · {p.days[n].ref}</button>
+            {passageUrl(p.days[n].ref) && <a class="btn small" style={{ background: 'rgba(255,255,255,.16)', color: '#FFFFFF' }} href={passageUrl(p.days[n].ref)} target="_blank" rel="noopener"><Icon name="book" size={16} />Lire le passage</a>}
+          </div>
         )}
       </section>
 
       <section class="col" style={{ gap: '8px' }}>
-        {p.days.map((d, i) => {
-          const isDone = !!p.done[i];
+        {(() => {
+          // Pour les longs plans, on affiche une fenêtre autour de la lecture en cours.
+          const from = showAll || p.days.length <= 14 ? 0 : Math.max(0, (n === -1 ? p.days.length : n) - 3);
+          const to = showAll || p.days.length <= 14 ? p.days.length : Math.min(p.days.length, from + 10);
           return (
-            <button onClick={() => toggle(i)} aria-pressed={isDone}
-              style={{ border: `2px solid ${i === n ? p.color : 'transparent'}`, textAlign: 'left', background: 'var(--surface)', borderRadius: '20px', padding: '12px 14px', display: 'flex', gap: '14px', alignItems: 'center', color: 'var(--ink)' }}>
-              <span class="col" style={{ width: '34px', alignItems: 'center', gap: 0 }}><span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>Jour</span><span class="big" style={{ fontSize: '20px' }}>{i + 1}</span></span>
-              <span class="col grow" style={{ gap: '2px' }}>
-                <span class="serif" style={{ fontSize: '22px', lineHeight: 1.1 }}>{d.ref}</span>
-                <span class="small muted">{isDone ? `Lu le ${fmtDay(p.done[i])}` : d.focus}</span>
-              </span>
-              {i === n && <span class="pill" style={{ background: `${p.color}22`, color: p.color }}>À lire</span>}
-              <span class="check" style={{ background: isDone ? p.color : 'transparent', borderColor: isDone ? p.color : 'var(--line)' }}>{isDone && <Icon name="check" size={16} />}</span>
-            </button>
+            <>
+              {p.days.slice(from, to).map((d, j) => {
+                const i = from + j;
+                const isDone = !!p.done[i];
+                const hasNote = !!(p.notes || {})[i];
+                return (
+                  <div style={{ border: `2px solid ${i === n ? p.color : 'transparent'}`, background: 'var(--surface)', borderRadius: '20px', padding: '10px 10px 10px 14px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button onClick={() => toggle(i)} aria-pressed={isDone} aria-label={`${d.ref} : ${isDone ? 'lu' : 'à lire'}`} style={{ border: 0, background: 'transparent', padding: 0, display: 'flex', gap: '12px', alignItems: 'center', flex: 1, minWidth: 0, textAlign: 'left', color: 'var(--ink)' }}>
+                      <span class="col" style={{ width: '34px', alignItems: 'center', gap: 0 }}><span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>Jour</span><span class="big" style={{ fontSize: '20px' }}>{i + 1}</span></span>
+                      <span class="col grow" style={{ gap: '2px' }}>
+                        <span class="serif" style={{ fontSize: '21px', lineHeight: 1.1 }}>{d.ref}</span>
+                        <span class="small muted">{isDone ? `Lu le ${fmtDay(p.done[i])}` : d.focus}{hasNote ? ' · méditation' : ''}</span>
+                      </span>
+                      <span class="check" style={{ background: isDone ? p.color : 'transparent', borderColor: isDone ? p.color : 'var(--line)' }}>{isDone && <Icon name="check" size={16} />}</span>
+                    </button>
+                    <button class="icon-btn" style={{ width: '38px', height: '38px', background: hasNote ? `${p.color}22` : 'var(--surface-2)', color: hasNote ? p.color : 'var(--ink)' }} aria-label={`Méditation et lien pour ${d.ref}`} onClick={() => setNote(i)}><Icon name="edit" size={17} /></button>
+                  </div>
+                );
+              })}
+              {p.days.length > 14 && <button class="btn soft small" onClick={() => setShowAll(!showAll)}>{showAll ? 'Réduire' : `Voir les ${p.days.length} lectures`}</button>}
+            </>
           );
-        })}
+        })()}
       </section>
 
       <section class="card">
@@ -180,6 +239,7 @@ export const PlanDetail = ({ id }) => {
         </div>
       </section>
       <DeleteButton label="Supprimer ce plan" onConfirm={() => { update((d) => { d.plans = d.plans.filter((y) => y.id !== id); }); go('/lecture'); }} />
+      {note != null && <NoteSheet plan={p} idx={note} onClose={() => setNote(null)} />}
     </div>
   );
 };
@@ -249,6 +309,28 @@ export const NewPlan = () => {
         <span class="sm" style={{ opacity: 0.92 }}>{end ? `Début demain · fin prévue le ${fmtDay(end)} · rappel à ${time}` : 'Choisissez des livres et des jours.'}</span>
       </section>
       <button class="btn block" style={{ height: '54px', fontSize: '16px' }} onClick={create}>Créer le plan</button>
+    </div>
+  );
+};
+
+/** Carnet : toutes les méditations, des plus récentes aux plus anciennes. */
+export const Journal = () => {
+  const s = useStore();
+  const [edit, setEdit] = useState(null);
+  const notes = s.plans.flatMap((p) => Object.entries(p.notes || {}).map(([i, txt]) => ({ p, i: Number(i), txt, date: p.done[i] || p.start })))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return (
+    <div class="page warm">
+      <Header back="/lecture" kicker="Lecture" title={<>Mon <span style={{ fontStyle: 'italic' }}>carnet</span></>} serif />
+      {notes.length === 0 && <div class="empty">Vos méditations apparaîtront ici. Après avoir validé une lecture, notez ce qui vous a touché.</div>}
+      {notes.map((x) => (
+        <button class="card" onClick={() => setEdit(x)} style={{ border: 0, textAlign: 'left', color: 'var(--ink)' }}>
+          <div class="row between"><span class="pill" style={{ background: `${x.p.color}22`, color: x.p.color }}>{x.p.name}</span><span class="small muted">{fmtDay(x.date)}</span></div>
+          <span class="serif" style={{ fontSize: '24px', lineHeight: 1.1 }}>{x.p.days[x.i].ref}</span>
+          <span class="sm" style={{ color: 'var(--ink-2)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>{x.txt}</span>
+        </button>
+      ))}
+      {edit && <NoteSheet plan={edit.p} idx={edit.i} onClose={() => setEdit(null)} />}
     </div>
   );
 };

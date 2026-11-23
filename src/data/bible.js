@@ -14,7 +14,15 @@ export const THEMES = [
   { id: 'sagesse', name: 'Sagesse', icon: 'bulb', color: '#9A6212', key: 'Jacques 1:5', desc: 'Demander la sagesse et apprendre à discerner.',
     days: [R('Proverbes 1:1-7', 'Le commencement de la sagesse'), R('Proverbes 2', 'Chercher comme un trésor'), R('Proverbes 3:13-26', 'Heureux qui trouve la sagesse'), R('Jacques 1:2-8', 'Demander avec foi'), R('Jacques 3:13-18', 'La sagesse d’en haut'), R('Ecclésiaste 3:1-15', 'Un temps pour tout'), R('Psaume 90', 'Compter nos jours')] },
   { id: 'pardon', name: 'Pardon', icon: 'health', color: '#B0345F', key: '1 Jean 1:9', desc: 'Recevoir le pardon et apprendre à pardonner.',
-    days: [R('Psaume 51', 'Un cœur pur'), R('Psaume 103', 'Il pardonne toutes tes fautes'), R('Luc 15:11-32', 'Le fils prodigue'), R('Matthieu 18:21-35', 'Soixante-dix fois sept fois'), R('Éphésiens 4:25-32', 'Pardonnez-vous'), R('Colossiens 3:12-15', 'Comme le Seigneur vous a pardonné'), R('1 Jean 1:5-10', 'Marcher dans la lumière')] }
+    days: [R('Psaume 51', 'Un cœur pur'), R('Psaume 103', 'Il pardonne toutes tes fautes'), R('Luc 15:11-32', 'Le fils prodigue'), R('Matthieu 18:21-35', 'Soixante-dix fois sept fois'), R('Éphésiens 4:25-32', 'Pardonnez-vous'), R('Colossiens 3:12-15', 'Comme le Seigneur vous a pardonné'), R('1 Jean 1:5-10', 'Marcher dans la lumière')] },
+  { id: 'esperance', name: 'Espérance', icon: 'sparkles', color: '#2F6BDB', key: 'Romains 15:13', desc: 'Garder les yeux fixés sur ce que Dieu prépare.',
+    days: [R('Romains 8:18-28', 'Toutes choses concourent au bien'), R('Lamentations 3:19-26', 'Ses compassions se renouvellent'), R('Psaume 42', 'Pourquoi t\u2019abats-tu, mon âme ?'), R('Ésaïe 40:27-31', 'Ceux qui espèrent renouvellent leur force'), R('Jérémie 29:10-14', 'Un avenir et une espérance'), R('1 Pierre 1:3-9', 'Une espérance vivante'), R('Apocalypse 21:1-7', 'Toutes choses nouvelles')] },
+  { id: 'priere', name: 'Prière', icon: 'spirit', color: '#7A4FD6', key: 'Philippiens 4:6', desc: 'Apprendre à prier avec simplicité et persévérance.',
+    days: [R('Matthieu 6:5-15', 'Le Notre Père'), R('Luc 11:1-13', 'Demandez, et l\u2019on vous donnera'), R('Psaume 145', 'Proche de ceux qui l\u2019invoquent'), R('Daniel 9:1-19', 'La prière de Daniel'), R('Jean 17', 'La prière de Jésus'), R('Éphésiens 3:14-21', 'Enracinés dans l\u2019amour'), R('Jacques 5:13-18', 'La prière fervente')] },
+  { id: 'famille', name: 'Famille', icon: 'family', color: '#C9651F', key: 'Josué 24:15', desc: 'Bâtir un foyer fondé sur la foi et l\u2019amour.',
+    days: [R('Genèse 2:18-25', 'Il n\u2019est pas bon que l\u2019homme soit seul'), R('Deutéronome 6:1-9', 'Tu les inculqueras à tes enfants'), R('Ruth 1', 'Où tu iras, j\u2019irai'), R('Psaume 127', 'Si l\u2019Éternel ne bâtit la maison'), R('Proverbes 31:10-31', 'La femme vaillante'), R('Éphésiens 5:21-33', 'Aimez-vous comme Christ a aimé'), R('Colossiens 3:18-21', 'La vie de famille')] },
+  { id: 'louange', name: 'Louange', icon: 'note', color: '#0F6E86', key: 'Psaume 150:6', desc: 'Faire de la reconnaissance un réflexe quotidien.',
+    days: [R('Psaume 100', 'Entrez dans ses portes avec louange'), R('Exode 15:1-18', 'Le cantique de Moïse'), R('2 Chroniques 20:14-22', 'La louange ouvre le chemin'), R('Luc 1:46-55', 'Le cantique de Marie'), R('Actes 16:22-34', 'Chanter en prison'), R('Psaume 150', 'Que tout ce qui respire loue l\u2019Éternel'), R('Apocalypse 5:6-14', 'L\u2019Agneau est digne')] }
 ];
 export const theme = (id) => THEMES.find((t) => t.id === id);
 
@@ -22,27 +30,60 @@ export const OT = [['Genèse', 50], ['Exode', 40], ['Lévitique', 27], ['Nombres
 export const NT = [['Matthieu', 28], ['Marc', 16], ['Luc', 24], ['Jean', 21], ['Actes', 28], ['Romains', 16], ['1 Corinthiens', 16], ['2 Corinthiens', 13], ['Galates', 6], ['Éphésiens', 6], ['Philippiens', 4], ['Colossiens', 4], ['1 Thessaloniciens', 5], ['2 Thessaloniciens', 3], ['1 Timothée', 6], ['2 Timothée', 4], ['Tite', 3], ['Philémon', 1], ['Hébreux', 13], ['Jacques', 5], ['1 Pierre', 5], ['2 Pierre', 3], ['1 Jean', 5], ['2 Jean', 1], ['3 Jean', 1], ['Jude', 1], ['Apocalypse', 22]];
 export const ALL_BOOKS = [...OT, ...NT];
 
+// Codes des livres utilisés par bible.com (version 93 = Louis Segond 1910).
+const USFM = ['GEN', 'EXO', 'LEV', 'NUM', 'DEU', 'JOS', 'JDG', 'RUT', '1SA', '2SA', '1KI', '2KI', '1CH', '2CH', 'EZR', 'NEH', 'EST', 'JOB', 'PSA', 'PRO', 'ECC', 'SNG', 'ISA', 'JER', 'LAM', 'EZK', 'DAN', 'HOS', 'JOL', 'AMO', 'OBA', 'JON', 'MIC', 'NAM', 'HAB', 'ZEP', 'HAG', 'ZEC', 'MAL', 'MAT', 'MRK', 'LUK', 'JHN', 'ACT', 'ROM', '1CO', '2CO', 'GAL', 'EPH', 'PHP', 'COL', '1TH', '2TH', '1TI', '2TI', 'TIT', 'PHM', 'HEB', 'JAS', '1PE', '2PE', '1JN', '2JN', '3JN', 'JUD', 'REV'];
+const NAMES = ALL_BOOKS.map(([n], i) => [n, USFM[i]]).concat([['Psaume', 'PSA']]).sort((a, b) => b[0].length - a[0].length);
+
+/**
+ * Lien vers le passage sur bible.com (Louis Segond 1910).
+ * @param {string} ref Référence comme « Hébreux 11:1-16 » ou « Psaumes 3-4 ».
+ * @returns {string|null}
+ */
+export const passageUrl = (ref) => {
+  const hit = NAMES.find(([n]) => ref.startsWith(n + ' ') || ref === n);
+  if (!hit) return null;
+  const rest = ref.slice(hit[0].length).trim();
+  const m = rest.match(/^(\d+)(?::(\d+)(?:-(\d+))?)?/);
+  const ch = m ? m[1] : '1';
+  const verses = m && m[2] && !rest.includes('–') && !/:\d+-\d+:/.test(rest) ? `.${m[2]}${m[3] ? '-' + m[3] : ''}` : '';
+  return `https://www.bible.com/bible/93/${hit[1]}.${ch}${verses}.LSG`;
+};
+
 /**
  * Découpe les livres choisis en lectures quotidiennes.
  * @param {string[]} books Livres choisis (dans n'importe quel ordre).
  * @param {number} pace Chapitres par lecture.
  * @returns {{ref: string, focus: string}[]}
  */
-export const buildDays = (books, pace) => {
+const chaptersOf = (books) => {
   const chapters = [];
-  ALL_BOOKS.filter(([n]) => books.includes(n)).forEach(([n, c]) => {
+  ALL_BOOKS.filter(([n]) => !books || books.includes(n)).forEach(([n, c]) => {
     for (let i = 1; i <= c; i += 1) chapters.push([n, i]);
   });
+  return chapters;
+};
+
+const label = (chunk) => {
+  const [b0, c0] = chunk[0];
+  const [b1, c1] = chunk[chunk.length - 1];
+  const single = ALL_BOOKS.find(([n]) => n === b0)[1] === 1;
+  let ref;
+  if (b0 === b1) ref = c0 === c1 ? (single ? b0 : `${b0} ${c0}`) : `${b0} ${c0}-${c1}`;
+  else ref = `${b0} ${c0} – ${b1} ${c1}`;
+  return { ref, focus: `${chunk.length} chapitre${chunk.length > 1 ? 's' : ''}` };
+};
+
+/** Toute la Bible (1 189 chapitres) répartie sur 365 jours. */
+export const buildYearDays = () => {
+  const ch = chaptersOf(null);
+  return Array.from({ length: 365 }, (_, i) => label(ch.slice(Math.floor((i * ch.length) / 365), Math.floor(((i + 1) * ch.length) / 365))));
+};
+
+export const buildDays = (books, pace) => {
+  const chapters = chaptersOf(books);
   const days = [];
   for (let i = 0; i < chapters.length; i += pace) {
-    const chunk = chapters.slice(i, i + pace);
-    const [b0, c0] = chunk[0];
-    const [b1, c1] = chunk[chunk.length - 1];
-    const single = ALL_BOOKS.find(([n]) => n === b0)[1] === 1;
-    let ref;
-    if (b0 === b1) ref = c0 === c1 ? (single ? b0 : `${b0} ${c0}`) : `${b0} ${c0}-${c1}`;
-    else ref = `${b0} ${c0} – ${b1} ${c1}`;
-    days.push({ ref, focus: `${chunk.length} chapitre${chunk.length > 1 ? 's' : ''}` });
+    days.push(label(chapters.slice(i, i + pace)));
   }
   return days;
 };

@@ -17,6 +17,7 @@ export const EMPTY = {
   bookGoal: 12,
   skills: [],
   reminders: [],
+  reviews: {},
   muted: {},
   fired: {}
 };

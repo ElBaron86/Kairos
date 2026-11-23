@@ -21,7 +21,7 @@
   --warm-soft: #FDE7D6;
   --warm-ink: #A3410F;
   --shadow: 0 8px 24px rgba(27, 26, 46, 0.06);
-  --display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
   --body: 'Plus Jakarta Sans', system-ui, sans-serif;
   --serif: 'Instrument Serif', Georgia, serif;
   color-scheme: light;

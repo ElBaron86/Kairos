@@ -10,9 +10,9 @@ const CHEERS = ['Belle régularité, continuez !', 'Chaque séance compte.', 'Vo
 const cheer = () => CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
 /** Enregistre une séance et félicite (avec annonce de passage de niveau). */
-const logSession = (skill, min, kind = 'pratique') => {
+const logSession = (skill, min, kind = 'pratique', note = '') => {
   const before = Math.floor(skill.sessions.reduce((t, x) => t + x.min, 0) / LEVEL_MIN);
-  update((d) => { d.skills.find((k) => k.id === skill.id).sessions.push({ date: today(), min, kind }); });
+  update((d) => { d.skills.find((k) => k.id === skill.id).sessions.push(note ? { date: today(), min, kind, note } : { date: today(), min, kind }); });
   const after = Math.floor((skill.sessions.reduce((t, x) => t + x.min, 0) + min) / LEVEL_MIN);
   toast(after > before ? `Niveau ${after} atteint en ${skill.name} !` : `+${fmtMin(min)} de ${skill.name} · ${cheer()}`);
 };
@@ -144,6 +144,7 @@ const timers = {};
 
 const Timer = ({ skill }) => {
   const [, tick] = useState(0);
+  const [note, setNote] = useState('');
   const tm = timers[skill.id] || { start: null, acc: 0 };
   const running = tm.start != null;
   const secs = Math.floor(tm.acc + (running ? (Date.now() - tm.start) / 1000 : 0));
@@ -155,7 +156,8 @@ const Timer = ({ skill }) => {
   };
   const save = () => {
     if (secs < 30) { toast('Séance trop courte pour être enregistrée'); return; }
-    logSession(skill, Math.max(1, Math.round(secs / 60)), 'minuteur');
+    logSession(skill, Math.max(1, Math.round(secs / 60)), 'minuteur', note.trim());
+    setNote('');
     timers[skill.id] = { start: null, acc: 0 };
     tick((x) => x + 1);
   };
@@ -173,8 +175,9 @@ const Timer = ({ skill }) => {
       </div>
       <div class="row" style={{ gap: '6px', width: '100%' }}>
         <span class="small muted" style={{ whiteSpace: 'nowrap' }}>Ajout rapide</span>
-        {[15, 30, 45, 60].map((m) => <button class="btn soft small grow" onClick={() => logSession(skill, m)}>+{m === 60 ? '1 h' : m}</button>)}
+        {[15, 30, 45, 60].map((m) => <button class="btn soft small grow" onClick={() => { logSession(skill, m, 'pratique', note.trim()); setNote(''); }}>+{m === 60 ? '1 h' : m}</button>)}
       </div>
+      <input class="input" style={{ height: '42px', fontSize: '14px' }} value={note} onInput={(e) => setNote(e.target.value)} placeholder="Note de séance (facultatif) : ex. travaillé la main gauche" aria-label="Note de séance" />
     </section>
   );
 };
@@ -267,6 +270,28 @@ const Heatmap = ({ skill }) => {
   );
 };
 
+const Monthly = ({ skill }) => {
+  const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; });
+  const vals = months.map((m) => skill.sessions.filter((x) => x.date.startsWith(m)).reduce((t, x) => t + x.min, 0));
+  const max = Math.max(60, ...vals);
+  return (
+    <section class="card">
+      <div class="row between"><h2 class="h2">Temps par mois</h2><span class="sm muted">{fmtMin(vals[5])} ce mois-ci</span></div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: '8px', alignItems: 'end', height: '130px' }}>
+        {months.map((m, i) => (
+          <div class="col" style={{ alignItems: 'center', gap: '6px', justifyContent: 'flex-end', height: '130px' }}>
+            <span class="small b num" style={{ fontSize: '11px' }}>{vals[i] ? fmtMin(vals[i]).replace(' ', '') : ''}</span>
+            <span style={{ width: '100%', maxWidth: '34px', height: `${Math.max(3, (vals[i] / max) * 90)}px`, borderRadius: '8px', background: i === 5 ? skill.color : `${skill.color}66` }} />
+            <span class="small muted" style={{ textTransform: 'capitalize' }}>{new Date(Number(m.slice(0, 4)), Number(m.slice(5)) - 1, 1).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const DAYS = [['L', 1], ['M', 2], ['M', 3], ['J', 4], ['V', 5], ['S', 6], ['D', 0]];
+
 export const SkillDetail = ({ id }) => {
   const s = useStore();
   const k = s.skills.find((x) => x.id === id);
@@ -315,6 +340,7 @@ export const SkillDetail = ({ id }) => {
 
       <Path skill={k} />
       <Heatmap skill={k} />
+      <Monthly skill={k} />
 
       <section class="col" style={{ gap: '10px' }}>
         <h2 class="h2">Badges</h2>
@@ -333,7 +359,7 @@ export const SkillDetail = ({ id }) => {
           <h2 class="h2">Dernières séances</h2>
           {recent.map((x) => (
             <div class="row">
-              <span class="col grow" style={{ gap: 0 }}><span class="sm b">{fmtMin(x.min)}</span><span class="small muted">{fmtDay(x.date)} · {x.kind}</span></span>
+              <span class="col grow" style={{ gap: 0 }}><span class="sm b">{fmtMin(x.min)}</span><span class="small muted">{fmtDay(x.date)} · {x.kind}{x.note ? ` · ${x.note}` : ''}</span></span>
               <button class="icon-btn" style={{ width: '34px', height: '34px', background: 'var(--surface-2)' }} aria-label="Supprimer la séance" onClick={() => update((d) => { d.skills.find((z) => z.id === id).sessions.splice(x.i, 1); })}><Icon name="trash" size={16} /></button>
             </div>
           ))}
@@ -344,6 +370,14 @@ export const SkillDetail = ({ id }) => {
         <Sheet title={k.name} onClose={() => setSettings(false)}>
           <Field label="Nom"><input class="input" value={k.name} onChange={(e) => update((d) => { d.skills.find((z) => z.id === id).name = e.target.value || k.name; })} /></Field>
           <Field label="Objectif par semaine (minutes)"><input class="input" inputMode="numeric" value={k.weeklyGoal} onChange={(e) => update((d) => { d.skills.find((z) => z.id === id).weeklyGoal = Math.max(10, Math.round(num(e.target.value)) || 60); })} /></Field>
+          <div class="field">Rappel de pratique
+            <div class="row">
+              <input class="input" type="time" style={{ width: '140px' }} value={k.remindTime || ''} onInput={(e) => update((d) => { const z = d.skills.find((y) => y.id === id); z.remindTime = e.target.value || null; if (!z.remindDays) z.remindDays = [1, 2, 3, 4, 5, 6, 0]; })} aria-label="Heure du rappel" />
+              {k.remindTime && <button class="btn soft small" onClick={() => update((d) => { d.skills.find((y) => y.id === id).remindTime = null; })}>Aucun rappel</button>}
+            </div>
+            {k.remindTime && <div class="grid7">{DAYS.map(([l, v]) => { const on = (k.remindDays || []).includes(v); return <button aria-pressed={on} onClick={() => update((d) => { const z = d.skills.find((y) => y.id === id); z.remindDays = on ? z.remindDays.filter((x) => x !== v) : [...(z.remindDays || []), v]; })} style={{ height: '40px', border: 0, borderRadius: '12px', fontWeight: 700, background: on ? 'var(--ink)' : 'var(--surface)', color: on ? 'var(--bg)' : 'var(--muted)' }}>{l}</button>; })}</div>}
+            <span class="hint">Le rappel ne sonne pas si vous avez déjà pratiqué ce jour-là.</span>
+          </div>
           <Field label="Ce que vous comptez" hint="ex. morceaux, mots appris, kilomètres…"><input class="input" value={k.unit} onChange={(e) => update((d) => { d.skills.find((z) => z.id === id).unit = e.target.value; })} /></Field>
           <div class="field">Couleur
             <div class="row" style={{ gap: '10px', flexWrap: 'wrap' }}>{PALETTE.map((hex) => <button aria-label="Couleur" aria-pressed={k.color === hex} onClick={() => update((d) => { d.skills.find((z) => z.id === id).color = hex; })} style={{ width: '40px', height: '40px', borderRadius: '20px', border: `3px solid ${k.color === hex ? 'var(--ink)' : 'transparent'}`, background: hex, padding: 0 }} />)}</div>

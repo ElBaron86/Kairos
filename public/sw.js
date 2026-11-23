@@ -1,5 +1,5 @@
 // Service worker de Kairos : fonctionnement hors ligne et affichage des notifications.
-const CACHE = 'kairos-v1';
+const CACHE = 'kairos-v2';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest', './icon-192.png'])).then(() => self.skipWaiting()));

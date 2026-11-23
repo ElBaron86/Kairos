@@ -1,11 +1,14 @@
 import { update, useStore } from '../store.js';
 import { EVENT_CATS } from '../data/catalog.js';
+import { eventsOn } from '../lib/events.js';
 import { nextIndex, upcoming } from '../lib/reminders.js';
 import { globalStreak, monthBudget, skillStats } from '../lib/stats.js';
 import { cap, eur, fmtLong, fmtMin, pct, today, toH } from '../lib/util.js';
 import { Dial, catColor, useDark, useNow } from '../ui/Dial.jsx';
 import { Flame, Icon } from '../ui/icons.jsx';
 import { Bar, toast } from '../ui/kit.jsx';
+import { Intentions } from './Review.jsx';
+import { parseISO, weekStart } from '../lib/util.js';
 
 const greeting = (h) => (h < 5 ? 'Bonne nuit' : h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir');
 
@@ -14,7 +17,9 @@ export const Home = () => {
   const now = useNow();
   const dark = useDark();
   const t = today();
-  const events = s.events.filter((e) => e.date === t).sort((a, b) => a.start.localeCompare(b.start));
+  const todayAll = eventsOn(s.events, t);
+  const events = todayAll.filter((e) => !e.allDay);
+  const allDay = todayAll.filter((e) => e.allDay);
   const next = events.find((e) => toH(e.end) > now);
   const mins = next ? Math.round((toH(next.start) - now) * 60) : 0;
   const b = monthBudget(s);
@@ -87,7 +92,8 @@ export const Home = () => {
           <h2 class="h2">Aujourd'hui</h2>
           <a href="#/agenda" class="sm b">Voir l'agenda</a>
         </div>
-        {events.length === 0 && <p class="sm muted" style={{ margin: 0 }}>Aucun événement. Ajoutez-en depuis l'agenda.</p>}
+        {allDay.map((e) => <span class="pill" style={{ background: (EVENT_CATS[e.cat] || EVENT_CATS.perso).tint, alignSelf: 'flex-start', fontSize: '13px' }}><span style={{ width: '8px', height: '8px', borderRadius: '4px', background: catColor(e.cat, dark) }} />{e.title} · toute la journée</span>)}
+        {events.length === 0 && allDay.length === 0 && <p class="sm muted" style={{ margin: 0 }}>Aucun événement. Ajoutez-en depuis l'agenda.</p>}
         {events.map((e) => (
           <div class="row" style={{ opacity: toH(e.end) < now ? 0.45 : 1 }}>
             <span class="sm b num" style={{ width: '46px' }}>{e.start}</span>
@@ -121,6 +127,23 @@ export const Home = () => {
           })}
         </section>
       )}
+
+      {(() => {
+        const wk = weekStart(t);
+        const r = (s.reviews || {})[wk];
+        const hasIntent = r && (r.intentions || []).some(Boolean);
+        const sunday = parseISO(t).getDay() === 0;
+        const reviewed = ((s.reviews || {})[wk] || {}).reviewedAt;
+        if (!hasIntent && !(sunday && !reviewed)) {
+          return <a href="#/revue" class="btn soft block" style={{ height: '52px' }}><Icon name="sparkles" size={18} />Ma revue de la semaine</a>;
+        }
+        return (
+          <section class="card">
+            <div class="row between"><h2 class="h2">{hasIntent ? 'Mes intentions' : 'C\u2019est dimanche'}</h2><a href="#/revue" class="sm b">{sunday && !reviewed ? 'Faire ma revue' : 'Ma revue'}</a></div>
+            {hasIntent ? <Intentions s={s} week={wk} compact /> : <span class="sm muted">Prenez 5 minutes pour faire le bilan de la semaine et choisir 3 intentions.</span>}
+          </section>
+        );
+      })()}
 
       <a href="#/rappels" class="card tight" style={{ flexDirection: 'row', alignItems: 'center', background: 'var(--accent-soft)', color: 'var(--ink)', textDecoration: 'none', boxShadow: 'none' }}>
         <span class="tile" style={{ width: '42px', height: '42px', background: 'var(--accent)', color: 'var(--accent-ink)' }}><Icon name="bell" /></span>

@@ -3,12 +3,15 @@ import { update, useStore } from '../store.js';
 import { askPermission, notify, upcoming } from '../lib/reminders.js';
 import { addDays, cap, fmtLong, today, uid } from '../lib/util.js';
 import { Icon } from '../ui/icons.jsx';
+import { enablePush, pushSupported } from '../lib/push.js';
+import { useCloud } from '../lib/cloud.js';
 import { DeleteButton, Field, Header, Sheet, toast } from '../ui/kit.jsx';
 
 const KIND = {
   agenda: { name: 'Agenda', icon: 'calendar', color: '#2F6BDB' },
   lecture: { name: 'Lecture', icon: 'book', color: '#B8441F' },
   budget: { name: 'Budget', icon: 'wallet', color: '#0F7A68' },
+  progres: { name: 'Progrès', icon: 'grow', color: '#4B3FD1' },
   perso: { name: 'Personnel', icon: 'bell', color: '#7A4FD6' }
 };
 
@@ -55,10 +58,15 @@ export const Reminders = () => {
   const label = (d) => (d === t ? 'Aujourd’hui' : d === addDays(t, 1) ? 'Demain' : cap(fmtLong(d)));
   const groups = [...new Set(list.map((r) => r.date))];
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  const cloud = useCloud();
 
   const enable = async () => {
     const res = await askPermission();
-    if (res === 'granted') { update((d) => { d.settings.notifications = true; }); notify('Kairos', 'Les notifications sont activées.'); toast('Notifications activées'); }
+    if (res === 'granted') {
+      update((d) => { d.settings.notifications = true; });
+      if (cloud.user && pushSupported()) { const err = await enablePush(); toast(err || 'Notifications activées, même application fermée'); }
+      else { notify('Kairos', 'Les notifications sont activées.'); toast('Notifications activées'); }
+    }
     else toast(res === 'unsupported' ? 'Ce navigateur ne gère pas les notifications' : 'Autorisation refusée dans le navigateur');
   };
 
@@ -85,7 +93,7 @@ export const Reminders = () => {
       )}
 
       <div class="hscroll hide-scroll" role="tablist">
-        {[['all', 'Tous'], ['agenda', 'Agenda'], ['lecture', 'Lecture'], ['budget', 'Budget'], ['perso', 'Personnel']].map(([k, l]) => <button role="tab" aria-selected={filter === k} class={'chip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>)}
+        {[['all', 'Tous'], ['agenda', 'Agenda'], ['lecture', 'Lecture'], ['budget', 'Budget'], ['progres', 'Progrès'], ['perso', 'Personnel']].map(([k, l]) => <button role="tab" aria-selected={filter === k} class={'chip' + (filter === k ? ' on' : '')} onClick={() => setFilter(k)}>{l}</button>)}
       </div>
 
       {groups.length === 0 && <div class="empty">Aucun rappel cette semaine. Ajoutez un rappel à un événement de l'agenda, à un plan de lecture, ou avec le bouton +.</div>}

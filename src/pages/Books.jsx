@@ -11,10 +11,44 @@ const patchBook = (id, fn) => update((d) => { fn(d.books.find((b) => b.id === id
 
 const Cover = ({ b, w = 62, h = 92 }) => {
   const c = (BOOK_CATS[b.cat] || BOOK_CATS.autre).color;
+  if (b.coverId) return <img src={`https://covers.openlibrary.org/b/id/${b.coverId}-M.jpg`} alt="" width={w} height={h} loading="lazy" style={{ width: `${w}px`, height: `${h}px`, objectFit: 'cover', borderRadius: '4px 8px 8px 4px', flexShrink: 0, background: c }} />;
   return (
     <div style={{ width: `${w}px`, height: `${h}px`, borderRadius: '4px 8px 8px 4px', background: c, display: 'flex', flexShrink: 0, overflow: 'hidden' }} aria-hidden="true">
       <span style={{ width: '6px', background: 'rgba(0,0,0,.22)' }} />
       {w > 40 && <span class="serif" style={{ flex: 1, padding: '8px 6px', fontSize: '12px', lineHeight: 1.1, color: '#FFFFFF', overflow: 'hidden' }}>{b.title}</span>}
+    </div>
+  );
+};
+
+/** Recherche dans le catalogue ouvert Open Library (titre, auteur, pages, couverture). */
+const BookSearch = ({ onPick }) => {
+  const [q, setQ] = useState('');
+  const [res, setRes] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const search = async () => {
+    if (q.trim().length < 2) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q.trim())}&limit=6&fields=key,title,author_name,number_of_pages_median,cover_i`);
+      const data = await r.json();
+      setRes(data.docs || []);
+    } catch (e) { toast('Recherche impossible : vérifiez la connexion'); setRes([]); }
+    setBusy(false);
+  };
+  return (
+    <div class="col" style={{ gap: '8px' }}>
+      <div class="row">
+        <input class="input" value={q} onInput={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} placeholder="Rechercher un titre ou un auteur" aria-label="Rechercher un livre" />
+        <button class="btn soft" onClick={search} disabled={busy}>{busy ? '…' : 'Chercher'}</button>
+      </div>
+      {res && res.length === 0 && <span class="small muted">Aucun résultat : remplissez les champs à la main.</span>}
+      {res && res.map((d) => (
+        <button class="row" onClick={() => { onPick({ title: d.title, author: (d.author_name || [])[0] || '', pages: d.number_of_pages_median || '', coverId: d.cover_i || null }); setRes(null); }}
+          style={{ border: 0, background: 'var(--surface)', borderRadius: '14px', padding: '8px', textAlign: 'left', color: 'var(--ink)' }}>
+          {d.cover_i ? <img src={`https://covers.openlibrary.org/b/id/${d.cover_i}-S.jpg`} alt="" width="34" height="50" style={{ width: '34px', height: '50px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} /> : <span style={{ width: '34px', height: '50px', borderRadius: '4px', background: 'var(--line)', flexShrink: 0 }} />}
+          <span class="col grow" style={{ gap: 0 }}><span class="sm b">{d.title}</span><span class="small muted">{(d.author_name || []).slice(0, 2).join(', ')}{d.number_of_pages_median ? ` · ${d.number_of_pages_median} p.` : ''}</span></span>
+        </button>
+      ))}
     </div>
   );
 };
@@ -37,6 +71,7 @@ const BookSheet = ({ initial, onClose }) => {
   };
   return (
     <Sheet title={isNew ? 'Ajouter un livre' : 'Modifier le livre'} onClose={onClose}>
+      {isNew && <BookSearch onPick={(x) => set({ ...b, ...x })} />}
       <Field label="Titre"><input class="input" value={b.title} onInput={(e) => p({ title: e.target.value })} /></Field>
       <Field label="Auteur"><input class="input" value={b.author} onInput={(e) => p({ author: e.target.value })} /></Field>
       <div class="field">Catégorie

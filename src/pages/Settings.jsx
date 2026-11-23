@@ -1,24 +1,32 @@
 import { useState } from 'preact/hooks';
 import { EMPTY, replaceState, update, useStore } from '../store.js';
 import { exampleState } from '../data/examples.js';
+import { importICS } from './Agenda.jsx';
 import { askPermission, notify } from '../lib/reminders.js';
 import { num, today } from '../lib/util.js';
 import { Icon } from '../ui/icons.jsx';
 import { DeleteButton, Field, Header, toast } from '../ui/kit.jsx';
-import { AccountCard } from '../ui/Account.jsx';
+import { AccountCard, HistoryButton } from '../ui/Account.jsx';
+import { disablePush, enablePush, pushActive, pushSupported } from '../lib/push.js';
+import { useCloud } from '../lib/cloud.js';
 
 export const Settings = () => {
   const s = useStore();
   const [income, setIncome] = useState(String(s.budget.income || ''));
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
 
+  const cloud = useCloud();
+  const [pushOn, setPushOn] = useState(pushActive());
   const toggleNotif = async () => {
-    if (s.settings.notifications) { update((d) => { d.settings.notifications = false; }); return; }
+    if (s.settings.notifications) { update((d) => { d.settings.notifications = false; }); await disablePush(); setPushOn(false); return; }
     const p = await askPermission();
     if (p === 'granted') {
       update((d) => { d.settings.notifications = true; });
-      notify('Kairos', 'Les notifications sont activées.');
-      toast('Notifications activées');
+      if (cloud.user && pushSupported()) {
+        const err = await enablePush();
+        setPushOn(!err);
+        toast(err || 'Notifications activées, même application fermée');
+      } else { notify('Kairos', 'Les notifications sont activées.'); toast('Notifications activées'); }
     } else toast(p === 'unsupported' ? 'Ce navigateur ne gère pas les notifications' : 'Autorisation refusée dans le navigateur');
   };
 
@@ -70,8 +78,16 @@ export const Settings = () => {
           </button>
         </div>
         <p class="small muted" style={{ margin: 0 }}>
-          Dans cette version, les rappels partent quand Kairos est ouvert ou en arrière-plan récent. Sur iPhone, ajoutez d'abord Kairos à l'écran d'accueil (Partager → Sur l'écran d'accueil).
+          {pushOn ? 'Rappels envoyés par le serveur : ils arrivent même application fermée.' : cloud.user ? 'Activez les notifications pour recevoir les rappels même application fermée.' : 'Connectez-vous à votre compte pour recevoir les rappels même application fermée.'} Sur iPhone, ajoutez d'abord Kairos à l'écran d'accueil (Partager → Sur l'écran d'accueil).
         </p>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <span class="tile" style={{ background: 'var(--warm-soft)', color: 'var(--warm-ink)' }}><Icon name="calendar" /></span>
+          <div class="col grow"><span class="b">Importer un agenda</span><span class="small muted">Fichier .ics de Google Agenda, iCloud ou Outlook</span></div>
+        </div>
+        <label class="btn soft block">Choisir un fichier .ics<input type="file" accept=".ics,text/calendar" class="sr" onChange={(e) => e.target.files[0] && importICS(e.target.files[0])} /></label>
       </section>
 
       <section class="card">
@@ -81,10 +97,11 @@ export const Settings = () => {
           <button class="btn soft" onClick={exportData}><Icon name="download" size={18} />Sauvegarder</button>
           <label class="btn soft"><Icon name="upload" size={18} />Restaurer<input type="file" accept="application/json" class="sr" onChange={importData} /></label>
         </div>
+        <HistoryButton />
         <button class="btn ghost block" onClick={() => { replaceState(exampleState(s.settings.name)); toast('Exemples chargés'); }}>Recharger les exemples</button>
         <DeleteButton label="Tout effacer" onConfirm={() => { replaceState({ ...structuredClone(EMPTY), onboarded: true, settings: { ...s.settings } }); toast('Toutes les données ont été effacées'); }} />
       </section>
-      <p class="small muted center">Kairos 0.2</p>
+      <p class="small muted center">Kairos 0.3</p>
     </div>
   );
 };

@@ -59,7 +59,7 @@ export const Bar = ({ value, color = 'var(--accent)', height = 8, track }) => (
 );
 
 const TABS = [
-  { href: '/', label: 'Accueil', icon: 'home', match: (r) => r === '/' || r.startsWith('/reglages') },
+  { href: '/', label: 'Accueil', icon: 'home', match: (r) => r === '/' || r.startsWith('/reglages') || r.startsWith('/revue') },
   { href: '/agenda', label: 'Agenda', icon: 'calendar' },
   { href: '/budget', label: 'Budget', icon: 'wallet' },
   { href: '/lecture', label: 'Lecture', icon: 'book' },
